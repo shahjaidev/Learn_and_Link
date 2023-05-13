@@ -9,14 +9,14 @@ GLOBAL_PROFILE_DICT_PATH = './global_dict_all_profiles.pickle'
 
 PASSWORD = os.environ.get('LINKEDIN_PASSWORD')
 
-class LinkedInAPI:
+class MyLinkedInAPI:
     def __init__(self, username, password):
         self.api = Linkedin('shahjaidevn@gmail.com', password)
         self.username = username
         self.password = password
         self.api = Linkedin(username, password)
         self.global_profile_dict = pickle.load(open(GLOBAL_PROFILE_DICT_PATH, "rb"))
-        self.this_profile_urn = None 
+        self.this_profile_id = None 
         self.this_profile_json = None
 
     #def process_global_profile_dict(self):
@@ -40,3 +40,12 @@ class LinkedInAPI:
     def get_profile_connections(self, profile_urn, keywords=None):
         connections = self.api.get_profile_connections(profile_urn)
         return connections
+    
+    def second_degree_connections_with_keywords(self, profile_urn, keywords=None):
+        
+        connections_with_filter = self.api.get_profile_connections(self.this_profile_id, network_depths=['F', 'S'], keywords = ["computer science"])
+        second_degree = []
+        for connection in connections_with_filter:
+            second_degree.extend(self.api.get_profile_connections(connection['urn_id']) )
+
+        print(second_degree)

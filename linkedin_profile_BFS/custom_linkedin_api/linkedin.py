@@ -232,6 +232,8 @@ class Linkedin(object):
             )
             data = res.json()
 
+            print("inside def search(), data: ")
+
             new_elements = []
             elements = data.get("data", {}).get("elements", [])
 
@@ -256,9 +258,10 @@ class Linkedin(object):
 
     def search_people(
         self,
+        limit=1000,
         keywords=None,
         connection_of=None,
-        network_depths= ['F','S'],        #None,
+        network_depths= ['F','S','O'],        #None,
         current_company=None,
         past_companies=None,
         nonprofit_interests=None,
@@ -723,7 +726,7 @@ class Linkedin(object):
 
         return profile
 
-    def get_profile_connections(self, urn_id,keywords=None, network_depths= ['F','S']):
+    def get_profile_connections(self, limit, urn_id,keywords=None, network_depths=None):
         """Fetch first-degree connections for a given LinkedIn profile.
 
         :param urn_id: LinkedIn URN ID for a profile
@@ -732,8 +735,8 @@ class Linkedin(object):
         :return: List of search results
         :rtype: list
         """
-        print("calling get_profile_connections with network_depths = ['F', 'S']")
-        return self.search_people(connection_of=urn_id, network_depths= network_depths, keywords=keywords)
+        print("calling get_profile_connections with network_depths = ", network_depths)
+        return self.search_people(limit=limit, connection_of=urn_id, network_depths= network_depths, keywords=keywords)
 
     def get_company_updates(
         self, public_id=None, urn_id=None, max_results=None, results=None

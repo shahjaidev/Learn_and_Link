@@ -13,7 +13,7 @@ password = os.environ.get('LINKEDIN_PASSWORD')
 # Authenticate using any Linkedin account credentials
 api = Linkedin('shah.jaidev00@gmail.com', password)
 
-PUBLIC_PROFILE =  "jaidev-shah-8952a1276" #"shahjaidev"
+PUBLIC_PROFILE =  'ethereal-shah-636388276' #"shahjaidev" #"jaidev-shah-8952a1276" #"shahjaidev"
 profile_response = api.get_profile(PUBLIC_PROFILE)
 print(profile_response.keys())
 
@@ -26,6 +26,8 @@ profile_urn_string = profile_response['profile_urn']
 profile_urn = profile_urn_string.split(":")[3]
 print(f"Profile URN: {profile_urn}")
 
+
+
 print(f"Profile Response: \n {profile_response}")
 
 # GET all connected profiles (1st, 2nd and 3rd degree) of a given profile
@@ -33,7 +35,9 @@ print(f"Profile Response: \n {profile_response}")
 
 #connections = api.get_profile_connections(profile_id, network_depths=['F', 'S'])
 
-connections_with_filter = api.get_profile_connections(profile_id, network_depths=['F', 'S'], keywords = ["computer science"])
+KEYWORDS = [""]
+
+connections_with_filter = api.get_profile_connections(limit=100, urn_id=profile_id, network_depths=['F', 'S', 'O'], keywords = KEYWORDS)
 
 print("*********************************************************************************************")
 print("CONNECTIONS with filter \n")
@@ -42,11 +46,15 @@ print("*************************************************************************
 #print("Connections \n")
 #print(connections)
 
+
+
 second_degree = []
 for connection in connections_with_filter:
-    second_degree.extend(api.get_profile_connections(connection['urn_id']) )
+    second_degree.extend(api.get_profile_connections(limit = 100, urn_id = connection['urn_id'], keywords=[""], network_depths=['F', 'S', 'O']))
 
 print(second_degree)
+
+print("Length of second degree connections: ", len(second_degree))
 
 
 

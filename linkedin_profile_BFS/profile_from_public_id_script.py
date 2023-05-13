@@ -26,8 +26,6 @@ print(f"Profile ID: {profile_id}")
 keys_to_keep = ['industryName', 'lastName', 'firstName', 'geoLocationName', 'headline', 'experience', 'education', 'projects']
 filtered_profile_dict = {key: profile_response_dict[key] for key in profile_response_dict if key in keys_to_keep}
 
-
-
 print(f"Filtered Profile Response: \n {filtered_profile_dict}")
 
 
