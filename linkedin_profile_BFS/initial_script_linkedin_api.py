@@ -11,7 +11,7 @@ import pickle
 password = os.environ.get('LINKEDIN_PASSWORD')
 
 # Authenticate using any Linkedin account credentials
-api = Linkedin('shahjaidevn@gmail.com', password)
+api = Linkedin('shah.jaidev00@gmail.com', password)
 
 PUBLIC_PROFILE =  "jaidev-shah-8952a1276" #"shahjaidev"
 profile_response = api.get_profile(PUBLIC_PROFILE)
