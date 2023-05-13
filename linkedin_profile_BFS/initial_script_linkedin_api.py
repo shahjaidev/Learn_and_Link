@@ -35,9 +35,9 @@ print(f"Profile Response: \n {profile_response}")
 
 #connections = api.get_profile_connections(profile_id, network_depths=['F', 'S'])
 
-KEYWORDS = [""]
+KEYWORDS = ["software development"]
 
-connections_with_filter = api.get_profile_connections(limit=100, urn_id=profile_id, network_depths=['F', 'S', 'O'], keywords = KEYWORDS)
+connections_with_filter = api.get_profile_connections(limit=10, urn_id=profile_id, network_depths=['F', 'S', 'O'], keywords = KEYWORDS)
 
 print("*********************************************************************************************")
 print("CONNECTIONS with filter \n")
@@ -50,7 +50,7 @@ print("*************************************************************************
 
 second_degree = []
 for connection in connections_with_filter:
-    second_degree.extend(api.get_profile_connections(limit = 100, urn_id = connection['urn_id'], keywords=[""], network_depths=['F', 'S', 'O']))
+    second_degree.extend(api.get_profile_connections(limit = 60, urn_id = connection['urn_id'], keywords=["software development"], network_depths=['F', 'S', 'O']))
 
 print(second_degree)
 
