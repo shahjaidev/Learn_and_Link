@@ -2,16 +2,18 @@
 #export LINKEDIN_PASSWORD="password"
 
 
-from linkedin_api import Linkedin
+#from linkedin_api import Linkedin
+from custom_linkedin_api import Linkedin
+
 import os
 import pickle
 
 password = os.environ.get('LINKEDIN_PASSWORD')
 
 # Authenticate using any Linkedin account credentials
-api = Linkedin('shahjaidev99@gmail.com', password)
+api = Linkedin('shahjaidevn@gmail.com', password)
 
-PUBLIC_PROFILE = "saksham-beotra"
+PUBLIC_PROFILE =  "jaidev-shah-8952a1276" #"shahjaidev"
 profile_response = api.get_profile(PUBLIC_PROFILE)
 print(profile_response.keys())
 
@@ -28,11 +30,28 @@ print(f"Profile Response: \n {profile_response}")
 
 # GET all connected profiles (1st, 2nd and 3rd degree) of a given profile
 
-connections = api.get_profile_connections(profile_id)
+
+#connections = api.get_profile_connections(profile_id, network_depths=['F', 'S'])
+
+connections_with_filter = api.get_profile_connections(profile_id, network_depths=['F', 'S'], keywords = ["computer science"])
 
 print("*********************************************************************************************")
-print("CONNECTIONS \n")
-print(connections)
+print("CONNECTIONS with filter \n")
+print(connections_with_filter)
+print("*********************************************************************************************")
+#print("Connections \n")
+#print(connections)
+
+second_degree = []
+for connection in connections_with_filter:
+    second_degree.extend(api.get_profile_connections(connection['urn_id']) )
+
+print(second_degree)
+
+
+
+
+
 
 """
 #For the first connection, get the profile id and then get the profile

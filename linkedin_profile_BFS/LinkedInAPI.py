@@ -1,5 +1,6 @@
 
 
+#from linkedin_api import Linkedin
 from linkedin_api import Linkedin
 import os
 import pickle
@@ -21,28 +22,12 @@ class LinkedInAPI:
     def display_global_profile_dict(self):
         print("Profile Names in global profile dict:")
         print(self.global_profile_dict.keys())
-        
     
-        
     def get_api_response_and_process_profile(self, profile_id):
         profile_response = self.api.get_profile(profile_id)
         self.this_profile_urn = profile_response['profile_id']
         self.this_profile_response_dict = dict(profile_response)
 
-    
-
-
-
-
-
-
-        
-
-
-
-
-
-    
 
 
     def get_profile_urn(self, profile_response):
@@ -50,6 +35,6 @@ class LinkedInAPI:
         profile_urn = profile_urn_string.split(":")[3]
         return profile_urn
     
-    def get_profile_connections(self, profile_urn):
+    def get_profile_connections(self, profile_urn, keywords=None):
         connections = self.api.get_profile_connections(profile_urn)
         return connections
