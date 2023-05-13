@@ -7,11 +7,13 @@ import pickle
 
 GLOBAL_PROFILE_DICT_PATH = './global_dict_all_profiles.pickle'
 
+PASSWORD = os.environ.get('LINKEDIN_PASSWORD')
+
 class LinkedInAPI:
     def __init__(self, username, password):
         self.api = Linkedin('shahjaidevn@gmail.com', password)
         self.username = username
-        self.password = os.environ.get('LINKEDIN_PASSWORD')
+        self.password = password
         self.api = Linkedin(username, password)
         self.global_profile_dict = pickle.load(open(GLOBAL_PROFILE_DICT_PATH, "rb"))
         self.this_profile_urn = None 
