@@ -50,7 +50,7 @@ print("*************************************************************************
 
 second_degree = []
 for connection in connections_with_filter:
-    second_degree.extend(api.get_profile_connections(limit = 60, urn_id = connection['urn_id'], keywords=["software development"], network_depths=['F', 'S', 'O']))
+    second_degree.extend(api.get_profile_connections(limit = 200, urn_id = connection['urn_id'], keywords=["software development"], network_depths=['F', 'S', 'O']))
 
 print(second_degree)
 

@@ -1,0 +1,4 @@
+linkedin-api
+anthropic
+cohere 
+flask 
