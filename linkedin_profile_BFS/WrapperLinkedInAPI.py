@@ -1,12 +1,13 @@
 
 
 #from linkedin_api import Linkedin
-from linkedin_api import Linkedin
+from custom_linkedin_api import Linkedin
 import os
 import pickle
-
+import ast
 import anthropic
 import cohere
+import json
 
 USERNAME = "shah.jaidev00@gmail.com"
 PASSWORD = os.environ.get('LINKEDIN_PASSWORD')
@@ -175,13 +176,14 @@ class MyLinkedInAPI:
         pass 
     
     def run_k_hop_BFS(self, profile_name, keywords=None):
+        print("Kicking off BFS")
         if keywords is None:
             top_5_keywords = self.claude_extract_keywords(profile_name)
-            keywords = [top_5_keywords[0]]
+            KEYWORDS = [top_5_keywords[0]]
         
         profile_dict= self.api.get_profile(profile_name)
         profile_id = profile_dict['profile_id']
-        connections_with_filter = self.api.get_profile_connections( urn_id= profile_id, network_depths=['F','S','O'], keywords = keywords)
+        connections_with_filter = self.api.get_profile_connections( urn_id= profile_id, network_depths=['F','S','O'], keywords = KEYWORDS)
 
         second_degree_list = []
         visited_set = set()
@@ -201,42 +203,59 @@ class MyLinkedInAPI:
         print([connection['profile_id'] for connection in k_hop_connections])
 
 
-    def rerank_summarized_profiles_for_recommendation(self, profile_name, user_free_form_text, read_from_pickle = False):
+    def rerank_summarized_profiles_for_recommendation(self, profile_name, user_free_form_text, top_K = 5, read_from_pickle = False):
         
         if read_from_pickle:
-            bfs_recalled_profiles_list = pickle.load(open("k_hop_connections.pickle", "rb"))
+            PATH = "software_k_hop_connections.pickle"
+            bfs_recalled_profiles_list = pickle.load(open(PATH, "rb"))
+
         else:
             bfs_recalled_profiles_list = self.run_k_hop_BFS(profile_name)
+        
+        bfs_recalled_profiles_jsons_list = [json.dumps(profile) for profile in bfs_recalled_profiles_list if profile["public_id"] != profile_name]
 
 
-        user_intent_query = "Looking to talk to a machine learning team manager at a large tech company for machine learning roles"
-        query = user_intent_query #+ "\n" + user_profile_summarized
+        user_intent_query = user_free_form_text #"Looking to talk to a machine learning team manager at a large tech company for machine learning roles"
+        query = user_intent_query    #+ "\n" + user_profile_summarized
 
         #ensure profile_name is not in the list
-        bfs_recalled_profiles_list = [profile for profile in bfs_recalled_profiles_list if profile["public_id"] != profile_name]
+        
 
-        summarized_bfs_recalled_profiles_list= [] 
+        reranked_results = co.rerank(query=query, documents=bfs_recalled_profiles_jsons_list, top_n=10, model='rerank-english-v2.0')
+
+        cleaned_reranked_results_dict = {}
+        for r in reranked_results[:top_K]:
+            profile_dict = r.document
+            print(profile_dict)
+            summarized_profile = self.helper_profile_summarize(r.document)
+            #convert r.document string to dict
+            #profile_dict = json.loads(profile)
+            print(f"Document: {summarized_profile}")
+            print(f"Relevance Score: {r.relevance_score}")
+            public_id = ast.literal_eval(profile_dict['text'])['public_id']
+            cleaned_reranked_results_dict[public_id] = summarized_profile
+            
+        return  cleaned_reranked_results_dict
+
+
+    def helper_summarize_recalled_profiles(self, bfs_recalled_profiles_list):
         cnt = 0
+        summarized_bfs_recalled_profiles_list= []
         for profile in bfs_recalled_profiles_list:
             summarized = self.helper_profile_summarize(profile)
             if cnt%10 ==0:
                 print(profile["public_id"])
                 print(summarized)
+                print(cnt)
+                cnt += 1
 
-            summarized_bfs_recalled_profiles_list.append(summarized)
+                summarized_bfs_recalled_profiles_list.append(summarized)
 
 
         #Save the summarized profiles to a pickle file
         pickle.dump(summarized_bfs_recalled_profiles_list, open("summarized_bfs_recalled_profiles_list.pickle", "wb"))
-
-        reranked_results = co.rerank(query=query, documents=summarized_bfs_recalled_profiles_list, top_n=10, model='rerank-english-v2.0')
-
-        for r in reranked_results:
-            print(f"Document: {r.document}")
-            print(f"Relevance Score: {r.relevance_score}")
-        return reranked_results
-
-
+        return summarized_bfs_recalled_profiles_list
+    
 def main():
     myapi_wrapper = MyLinkedInAPI(USERNAME, PASSWORD)
     """
@@ -258,9 +277,12 @@ def main():
     intro_generated = myapi_wrapper.intro_generation("shahjaidev", "linjuny", user_free_form_text)
     print(intro_generated)
     """
-    PROFILE_NAME = "shahjaidev"
-    reranked = myapi_wrapper.rerank_summarized_profiles_for_recommendation(PROFILE_NAME)
+
+    user_free_form_text = "Looking for opportunities where I can use my applied machine learning skills at scale"
+    PROFILE_NAME = 'ethereal-shah-636388276'
+    reranked = myapi_wrapper.rerank_summarized_profiles_for_recommendation(PROFILE_NAME, user_free_form_text, top_K = 5, read_from_pickle = True)
     print(reranked)
+    print((len(reranked)))
 
 
 
