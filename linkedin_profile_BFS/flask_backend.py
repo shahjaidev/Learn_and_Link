@@ -12,7 +12,8 @@ from LinkedInAPI import MyLinkedInAPI
 
 app = Flask(__name__)
 
-ANTHROPIC_API_KEY = os.environ.get('CLAUDE_API_KEY')
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
+
 COHERE_API_KEY = os.environ.get('COHERE_API_KEY')
 
 claude = anthropic.Client(os.environ.get('ANTHROPIC_API_KEY'))
@@ -147,11 +148,11 @@ def cohere_rerank():
     results = co.rerank(query=query, documents=docs, top_n=5, model='rerank-english-v2.0')
 
     # print the reranked documents and their scores
-    for result in results:
-        print(f"Document: {result.document}")
-        print(f"Relevance Score: {result.score}")
+    for r in results:
+        print(f"Document: {r.document}")
+        print(f"Relevance Score: {r.relevance_score}")
 
-    return results
+    return results  
 
 
 
@@ -192,9 +193,9 @@ Education: M.Sc. Computer Science, University of Manitoba
     )
 
 
-    prompt_for_keywords= f"Given this LinkedIn profile: {linkedin_profile_test}, Extract the most relevant keywords from this persons profile that would help him find good connections to network with: "
+    prompt_for_keywords= f"Given this LinkedIn profile: {linkedin_profile_test_dict}, Extract the 5 most relevant keywords from this persons profile that would help him find good connections to network with: "
     
-    max_tokens_to_sample = 10
+    max_tokens_to_sample = 100
     resp_keywords = claude.completion(
         prompt=f"{anthropic.HUMAN_PROMPT} {prompt_for_keywords}{anthropic.AI_PROMPT}",
         stop_sequences=[anthropic.HUMAN_PROMPT],
