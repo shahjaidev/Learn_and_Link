@@ -34,7 +34,9 @@ def default_evade():
     A catch-all method to try and evade suspension from Linkedin.
     Currenly, just delays the request by a random (bounded) time
     """
-    sleep(random.randint(2, 5))  # sleep a random duration to try and evade suspention
+    #random float
+    sleep(random.uniform(0.5, 1))  # sleep a random duration to try and evade suspention
+    #sleep(random.randint(2, 5))  # sleep a random duration to try and evade suspention
 
 
 class Linkedin(object):
@@ -190,7 +192,7 @@ class Linkedin(object):
             data["paging"] = res.json()["paging"]
         return data["elements"]
 
-    def search(self, params, limit=-1, offset=0):
+    def search(self, params, limit=-1, offset=5):
         """Perform a LinkedIn search.
 
         :param params: Search parameters (see code)
@@ -208,8 +210,12 @@ class Linkedin(object):
         if limit is None:
             limit = -1
 
+        print("Inside search")
         results = []
+        iter_count = 0
+        TOTAL_ITERATIONS = 15
         while True:
+            offset = random.randint(1, 30)
             # when we're close to the limit, only fetch what we need to
             if limit > -1 and limit - len(results) < count:
                 count = limit - len(results)
@@ -229,8 +235,16 @@ class Linkedin(object):
             )
             data = res.json()
 
+            print("************************")
+            print("\n\n\n iter_count: ", iter_count)
+
+            print(data)
+
+
             new_elements = []
             elements = data.get("data", {}).get("elements", [])
+
+            
 
             for element in elements:
                 new_elements.extend(element.get("elements", {}))
@@ -238,13 +252,17 @@ class Linkedin(object):
                 # new_elements.extend(data["data"]["elements"][i]["extendedElements"])
             results.extend(new_elements)
 
+            
+            if iter_count > TOTAL_ITERATIONS:
+                break
+            iter_count += 1
+
             # break the loop if we're done searching
             # NOTE: we could also check for the `total` returned in the response.
             # This is in data["data"]["paging"]["total"]
             if (
                 (-1 < limit <= len(results))  # if our results exceed set limit
-                or len(results) / count >= Linkedin._MAX_REPEATED_REQUESTS
-            ) or len(new_elements) == 0:
+                or len(results) / count >= Linkedin._MAX_REPEATED_REQUESTS): # or len(new_elements) == 0:
                 break
 
             self.logger.debug(f"results grew to {len(results)}")

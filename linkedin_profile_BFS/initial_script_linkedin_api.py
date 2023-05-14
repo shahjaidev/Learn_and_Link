@@ -45,8 +45,6 @@ print("*************************************************************************
 #print("Connections \n")
 #print(connections)
 
-
-
 second_degree_list = []
 visited_set = set()
 for connection in connections_with_filter:
@@ -65,7 +63,13 @@ for connection in connections_with_filter:
 print(second_degree_list)
 print("Length of second degree connections: ", len(second_degree_list))
 
-visited_set = set()
+k_hop_connections = connections_with_filter + second_degree_list
+
+#Save the list of k_hop_connections to a pickle file
+with open('software_k_hop_connections.pickle', 'wb') as handle:
+    pickle.dump(k_hop_connections, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+"""
 third_degree_list = []
 
 KEYWORDS = ['tech']
@@ -91,7 +95,7 @@ all_k_hop_urns = set([connection['urn_id'] for connection in all_k_hop_connectio
 print("All visited public ids: ", visited_set)
 print("All k hop URNs are: ", all_k_hop_urns)
 
-
+"""
 
 
 

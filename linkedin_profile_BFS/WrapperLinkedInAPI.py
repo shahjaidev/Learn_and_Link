@@ -65,8 +65,11 @@ class MyLinkedInAPI:
 
     def claude_extract_keywords(self, profile_name):
         profile_dict= self.api.get_profile(profile_name)
+        keys_to_keep = ['industryName', 'lastName', 'firstName', 'geoLocationName', 'headline', 'experience', 'education', 'projects']
+        filtered_profile_dict = {key: profile_dict[key] for key in profile_dict if key in keys_to_keep}
+        
         summarization_prompt = f"Clean up and summarize the below LinkedIn Profile such that all the key parts that are important when networking are retained:\n" \
-                    f"{profile_dict}\n" \
+                    f"{filtered_profile_dict}\n" \
                     "Profile Summary: "   
         
         #Call the Claude API to summarize the profile
@@ -79,7 +82,7 @@ class MyLinkedInAPI:
         )
         resp_summary = response['completion']
 
-        prompt_for_keywords= f"Given this LinkedIn profile: {resp_summary}, Extract the 5 most relevant keywords as a list of strings from this persons profile that would help him find good connections to network with: "
+        prompt_for_keywords= f"Given this LinkedIn profile: {resp_summary}, Extract the 5 most relevant keywords from this persons profile that would help him find good connections to network with. Extract the keywords as a list of strings such that the first keyword is the most aligned with the kind of connection the user is looking to make: "
         
         max_tokens_to_sample = 300
         resp_keywords = claude.completion(
@@ -115,6 +118,26 @@ class MyLinkedInAPI:
         return resp_job_posting
 
  
+    def helper_profile_summarize(self, profile_dict):
+        keys_to_keep = ['industryName', 'lastName', 'firstName', 'geoLocationName', 'headline', 'experience', 'education', 'projects']
+        filtered_profile_dict = {key: profile_dict[key] for key in profile_dict if key in keys_to_keep}
+        
+        summarization_prompt = f"Clean up and summarize the below LinkedIn Profile such that all the key parts that are important when networking are retained:\n" \
+                    f"{filtered_profile_dict}\n" \
+                    "Profile Summary: "   
+        
+        #Call the Claude API to summarize the profile
+        max_tokens_to_sample = 1000
+        response = claude.completion(
+            prompt=f"{anthropic.HUMAN_PROMPT} {summarization_prompt}{anthropic.AI_PROMPT}",
+            stop_sequences=[anthropic.HUMAN_PROMPT],
+            model="claude-instant-v1",
+            max_tokens_to_sample=max_tokens_to_sample,
+        )
+
+        resp_summary = response['completion']
+
+        return resp_summary
 
 
     def intro_generation(self, candidate_profile_url, lead_profile_url, user_free_form_text):
@@ -150,7 +173,70 @@ class MyLinkedInAPI:
         cleaned_profile_summary = self.get_cleaned_profile_summary(profile_name)
         keywords = self.claude_extract_keywords(profile_name)
         pass 
+    
+    def run_k_hop_BFS(self, profile_name, keywords=None):
+        if keywords is None:
+            top_5_keywords = self.claude_extract_keywords(profile_name)
+            keywords = [top_5_keywords[0]]
         
+        profile_dict= self.api.get_profile(profile_name)
+        profile_id = profile_dict['profile_id']
+        connections_with_filter = self.api.get_profile_connections( urn_id= profile_id, network_depths=['F','S','O'], keywords = keywords)
+
+        second_degree_list = []
+        visited_set = set()
+        for connection in connections_with_filter:
+            next_hop_connections = self.api.get_profile_connections(urn_id = connection['urn_id'], network_depths=['F', 'S', 'O'], keywords=KEYWORDS)
+            print("For connection: ", connection['name'], " next_hop_connections are: ") 
+            visited_set.add(connection['public_id'])
+            for next_hop_connection in next_hop_connections:
+                public_id = next_hop_connection['public_id']
+                if public_id not in visited_set:
+                    second_degree_list.append(next_hop_connection)
+                    print(public_id)
+
+        print("Length of second degree connections: ", len(second_degree_list))
+
+        k_hop_connections = connections_with_filter + second_degree_list
+        print([connection['profile_id'] for connection in k_hop_connections])
+
+
+    def rerank_summarized_profiles_for_recommendation(self, profile_name, user_free_form_text, read_from_pickle = False):
+        
+        if read_from_pickle:
+            bfs_recalled_profiles_list = pickle.load(open("k_hop_connections.pickle", "rb"))
+        else:
+            bfs_recalled_profiles_list = self.run_k_hop_BFS(profile_name)
+
+
+        user_intent_query = "Looking to talk to a machine learning team manager at a large tech company for machine learning roles"
+        query = user_intent_query #+ "\n" + user_profile_summarized
+
+        #ensure profile_name is not in the list
+        bfs_recalled_profiles_list = [profile for profile in bfs_recalled_profiles_list if profile["public_id"] != profile_name]
+
+        summarized_bfs_recalled_profiles_list= [] 
+        cnt = 0
+        for profile in bfs_recalled_profiles_list:
+            summarized = self.helper_profile_summarize(profile)
+            if cnt%10 ==0:
+                print(profile["public_id"])
+                print(summarized)
+
+            summarized_bfs_recalled_profiles_list.append(summarized)
+
+
+        #Save the summarized profiles to a pickle file
+        pickle.dump(summarized_bfs_recalled_profiles_list, open("summarized_bfs_recalled_profiles_list.pickle", "wb"))
+
+        reranked_results = co.rerank(query=query, documents=summarized_bfs_recalled_profiles_list, top_n=10, model='rerank-english-v2.0')
+
+        for r in reranked_results:
+            print(f"Document: {r.document}")
+            print(f"Relevance Score: {r.relevance_score}")
+        return reranked_results
+
+
 def main():
     myapi_wrapper = MyLinkedInAPI(USERNAME, PASSWORD)
     """
@@ -166,39 +252,19 @@ def main():
     print("Keywords")
     keywords = myapi_wrapper.claude_extract_keywords("ranganm")
     print(keywords)
-    """
+   
 
     user_free_form_text = "Looking for opportunities where I can use my applied machine learning skills at scale"
     intro_generated = myapi_wrapper.intro_generation("shahjaidev", "linjuny", user_free_form_text)
     print(intro_generated)
+    """
+    PROFILE_NAME = "shahjaidev"
+    reranked = myapi_wrapper.rerank_summarized_profiles_for_recommendation(PROFILE_NAME)
+    print(reranked)
+
 
 
 
 
 main()
 
-
-
-"""
-
-def cohere_rerank():
-
-    # define the query and the documents
-    query = 'What is the capital of the United States?'
-    docs = ['Carson City is the capital city of the American state of Nevada.',
-            'The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.',
-            'Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.',
-            'Capital punishment (the death penalty) has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.',
-            'The capital city of Canada is Ottawa, Ontario.',
-            'The capital city of France is Paris.']
-
-    # rerank the documents based on semantic relevance
-    results = co.rerank(query=query, documents=docs, top_n=5, model='rerank-english-v2.0')
-
-    # print the reranked documents and their scores
-    for r in results:
-        print(f"Document: {r.document}")
-        print(f"Relevance Score: {r.relevance_score}")
-
-    return results  
-"""
