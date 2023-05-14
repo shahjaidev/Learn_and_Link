@@ -51,7 +51,7 @@ class Linkedin(object):
     _MAX_UPDATE_COUNT = 100  # max seems to be 100
     _MAX_SEARCH_COUNT = 49  # max seems to be 49, and min seems to be 2
     _MAX_REPEATED_REQUESTS = (
-        200  # VERY conservative max requests count to avoid rate-limit
+        300  # VERY conservative max requests count to avoid rate-limit
     )
 
     def __init__(
@@ -190,7 +190,7 @@ class Linkedin(object):
             data["paging"] = res.json()["paging"]
         return data["elements"]
 
-    def search(self, params, limit=-1, offset=0):
+    def search(self, params, offset=0):
         """Perform a LinkedIn search.
 
         :param params: Search parameters (see code)
@@ -204,10 +204,14 @@ class Linkedin(object):
         :return: List of search results
         :rtype: list
         """
+        limit = 100000 
         count = Linkedin._MAX_SEARCH_COUNT
         if limit is None:
             limit = -1
+        print("Inside Search:")
+        print(params)
 
+        
         results = []
         while True:
             # when we're close to the limit, only fetch what we need to
@@ -228,6 +232,8 @@ class Linkedin(object):
                 headers={"accept": "application/vnd.linkedin.normalized+json+2.1"},
             )
             data = res.json()
+
+            print("inside def search(), data: ")
 
             new_elements = []
             elements = data.get("data", {}).get("elements", [])
@@ -255,7 +261,7 @@ class Linkedin(object):
         self,
         keywords=None,
         connection_of=None,
-        network_depths=None,
+        network_depths= ['F','S','O'],        #None,
         current_company=None,
         past_companies=None,
         nonprofit_interests=None,
@@ -357,6 +363,7 @@ class Linkedin(object):
 
         params = {"filters": "List({})".format(",".join(filters))}
 
+        print("All filters in search_people : ", filters)
         if keywords:
             params["keywords"] = keywords
 
@@ -719,7 +726,7 @@ class Linkedin(object):
 
         return profile
 
-    def get_profile_connections(self, urn_id, network_depths= None):
+    def get_profile_connections(self, urn_id,keywords=None, network_depths=None):
         """Fetch first-degree connections for a given LinkedIn profile.
 
         :param urn_id: LinkedIn URN ID for a profile
@@ -728,7 +735,8 @@ class Linkedin(object):
         :return: List of search results
         :rtype: list
         """
-        return self.search_people(connection_of=urn_id, network_depths= network_depths)
+        print("calling get_profile_connections with network_depths = ", network_depths)
+        return self.search_people( connection_of=urn_id, network_depths= network_depths, keywords=keywords)
 
     def get_company_updates(
         self, public_id=None, urn_id=None, max_results=None, results=None

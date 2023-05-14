@@ -195,7 +195,7 @@ Education: M.Sc. Computer Science, University of Manitoba
 
     prompt_for_keywords= f"Given this LinkedIn profile: {linkedin_profile_test_dict}, Extract the 5 most relevant keywords from this persons profile that would help him find good connections to network with: "
     
-    max_tokens_to_sample = 100
+    max_tokens_to_sample = 300
     resp_keywords = claude.completion(
         prompt=f"{anthropic.HUMAN_PROMPT} {prompt_for_keywords}{anthropic.AI_PROMPT}",
         stop_sequences=[anthropic.HUMAN_PROMPT],
