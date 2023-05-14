@@ -719,7 +719,7 @@ class Linkedin(object):
 
         return profile
 
-    def get_profile_connections(self, urn_id, network_depths= None):
+    def get_profile_connections(self, urn_id, network_depths= None, keywords = None):
         """Fetch first-degree connections for a given LinkedIn profile.
 
         :param urn_id: LinkedIn URN ID for a profile
@@ -728,7 +728,7 @@ class Linkedin(object):
         :return: List of search results
         :rtype: list
         """
-        return self.search_people(connection_of=urn_id, network_depths= network_depths)
+        return self.search_people(connection_of=urn_id, network_depths= network_depths, keywords = keywords)
 
     def get_company_updates(
         self, public_id=None, urn_id=None, max_results=None, results=None

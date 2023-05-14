@@ -34,9 +34,9 @@ print(f"Profile Response: \n {profile_response}")
 
 #connections = api.get_profile_connections(profile_id, network_depths=['F', 'S'])
 
-KEYWORDS = [] #["software"]
+KEYWORDS = ["software"]
     #limit=200,
-connections_with_filter = api.get_profile_connections( urn_id=profile_id, network_depths=['F','S','O'])
+connections_with_filter = api.get_profile_connections( urn_id=profile_id, network_depths=['F','S','O'], keywords = KEYWORDS)
 
 print("*********************************************************************************************")
 print("CONNECTIONS with filter \n")
@@ -50,7 +50,7 @@ print("*************************************************************************
 second_degree_list = []
 visited_set = set()
 for connection in connections_with_filter:
-    next_hop_connections = api.get_profile_connections(urn_id = connection['urn_id'], network_depths=['F', 'S', 'O']) #, keywords=KEYWORDS, network_depths=['F', 'S', 'O'])
+    next_hop_connections = api.get_profile_connections(urn_id = connection['urn_id'], network_depths=['F', 'S', 'O'], keywords=KEYWORDS)
    # next_hop_connection_profiles = api.get_profile(connection['public_id'])
     
     print("For connection: ", connection['name'], " next_hop_connections are: ") 
@@ -68,9 +68,11 @@ print("Length of second degree connections: ", len(second_degree_list))
 visited_set = set()
 third_degree_list = []
 
+KEYWORDS = ['tech']
+
 for connection in second_degree_list:
     public_id = connection['public_id']
-    next_hop_connections = api.get_profile_connections( urn_id = connection['urn_id'], network_depths=['F', 'S', 'O']) #, keywords=KEYWORDS, network_depths=['F', 'S', 'O'])
+    next_hop_connections = api.get_profile_connections( urn_id = connection['urn_id'], network_depths=['F', 'S', 'O'], keywords=KEYWORDS)
     print("For connection: ", connection['public_id'], " next_hop_connections are: ", next_hop_connections) 
     visited_set.add(public_id)
 
