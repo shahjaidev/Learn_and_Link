@@ -8,6 +8,9 @@ import pickle
 import anthropic
 import cohere
 
+USERNAME = "shah.jaidev00@gmail.com"
+PASSWORD = os.environ.get('LINKEDIN_PASSWORD')
+
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
 COHERE_API_KEY = os.environ.get('COHERE_API_KEY')
 
@@ -103,7 +106,7 @@ class MyLinkedInAPI:
         response = claude.completion(
             prompt=f"{anthropic.HUMAN_PROMPT} {summarization_prompt}{anthropic.AI_PROMPT}",
             stop_sequences=[anthropic.HUMAN_PROMPT],
-            model="claude-instant-v1",
+            model="claude-v1",
             max_tokens_to_sample=max_tokens_to_sample,
         )
         resp_job_posting = response['completion']
@@ -114,6 +117,33 @@ class MyLinkedInAPI:
  
 
 
+    def intro_generation(self, candidate_profile_url, lead_profile_url, user_free_form_text):
+        candidate_profile_name = candidate_profile_url.split("/")[-1]
+        candidate_summary = self.get_cleaned_profile_summary(candidate_profile_name)
+
+        lead_profile_name = lead_profile_url.split("/")[-1]
+        lead_summary = self.get_cleaned_profile_summary(lead_profile_name)
+
+
+        prompt = f"Assume you are a candidate looking for a job.  Write a warm personalized introduction message to the lead profile, that includes commonalities between the two of you, relevance to their own work and title, and and explaining why your skills would be a good fit for his team and the role you are interested in." \
+                f"Here are the descriptions for each the candidate and the lead:\n\n" \
+                    f"Candidate: {candidate_summary}\n\n" \
+                    f"Lead: {lead_summary}" \
+                    f"And here is the candidate's aspiration: {user_free_form_text}"
+        
+        # Call the Claude API to generate an intro
+        max_tokens_to_sample: int = 1000
+        resp = claude.completion(
+            prompt=f"{anthropic.HUMAN_PROMPT} {prompt}{anthropic.AI_PROMPT}",
+            stop_sequences=[anthropic.HUMAN_PROMPT],
+            model="claude-v1",
+            max_tokens_to_sample=max_tokens_to_sample,
+        )
+
+        print(resp)
+
+        return resp['completion']
+
     def recommended_profiles(self,free_form_text, profile_name):
         profile_dict= self.api.get_profile(profile_name)
         profile_urn = self.get_profile_urn(profile_dict)
@@ -122,12 +152,9 @@ class MyLinkedInAPI:
         pass 
         
 def main():
-    USERNAME = "shah.jaidev00@gmail.com"
-    PASSWORD = os.environ.get('LINKEDIN_PASSWORD')
     myapi_wrapper = MyLinkedInAPI(USERNAME, PASSWORD)
-
+    """
     test_job_id = 3595709943
-
     print("Job Posting")
     cleaned_posting = myapi_wrapper.get_job_posting(test_job_id)
     print(cleaned_posting)
@@ -139,6 +166,13 @@ def main():
     print("Keywords")
     keywords = myapi_wrapper.claude_extract_keywords("ranganm")
     print(keywords)
+    """
+
+    user_free_form_text = "Looking for opportunities where I can use my applied machine learning skills at scale"
+    intro_generated = myapi_wrapper.intro_generation("shahjaidev", "linjuny", user_free_form_text)
+    print(intro_generated)
+
+
 
 
 main()
