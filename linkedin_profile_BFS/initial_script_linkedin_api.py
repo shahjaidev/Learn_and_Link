@@ -26,8 +26,6 @@ profile_urn_string = profile_response['profile_urn']
 profile_urn = profile_urn_string.split(":")[3]
 print(f"Profile URN: {profile_urn}")
 
-
-
 print(f"Profile Response: \n {profile_response}")
 
 # GET all connected profiles (1st, 2nd and 3rd degree) of a given profile
@@ -35,9 +33,9 @@ print(f"Profile Response: \n {profile_response}")
 
 #connections = api.get_profile_connections(profile_id, network_depths=['F', 'S'])
 
-KEYWORDS = ["software development"]
+KEYWORDS = ["machine learning"]
 
-connections_with_filter = api.get_profile_connections(limit=10, urn_id=profile_id, network_depths=['F', 'S', 'O'], keywords = KEYWORDS)
+connections_with_filter = api.get_profile_connections(limit=30, urn_id=profile_id, network_depths=['F', 'S', 'O'], keywords = KEYWORDS)
 
 print("*********************************************************************************************")
 print("CONNECTIONS with filter \n")
@@ -50,11 +48,20 @@ print("*************************************************************************
 
 second_degree = []
 for connection in connections_with_filter:
-    second_degree.extend(api.get_profile_connections(limit = 200, urn_id = connection['urn_id'], keywords=["software development"], network_depths=['F', 'S', 'O']))
+    second_degree.extend(api.get_profile_connections(limit = 80, urn_id = connection['urn_id'], keywords=KEYWORDS, network_depths=['F', 'S', 'O']))
 
 print(second_degree)
 
 print("Length of second degree connections: ", len(second_degree))
+
+third_degree = []
+for connection in second_degree:
+    third_degree.extend(api.get_profile_connections(limit = 50, urn_id = connection['urn_id'], keywords=KEYWORDS, network_depths=['F', 'S', 'O']))
+
+print(third_degree)
+print("Length of third degree connections: ", len(third_degree))
+
+
 
 
 
