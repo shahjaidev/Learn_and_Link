@@ -8,7 +8,7 @@ import cohere
 # from customized_linkedinAPI import LinkedIn
 import os
 
-from LinkedInAPI import MyLinkedInAPI
+from WrapperLinkedInAPI import MyLinkedInAPI
 
 app = Flask(__name__)
 
